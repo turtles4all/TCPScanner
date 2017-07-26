@@ -61,13 +61,12 @@ int main(int argc, char **argv) {
         serv_addr.sin_port = htons(i);
 
         if (connect(sockfd, (struct sockaddr*)&serv_addr, sizeof(serv_addr)) < 0) {
-          fprintf(stderr, "PORT: %i [ CLOSED ]\n", i);
+          fprintf(stderr, "HOST: [ %s ] PORT: %i [ CLOSED ]\n", rhost, i);
 
         } else {
-         fprintf(stdout, "PORT: %i [ OPEN ]\n", i);
-         close(sockfd);
+         fprintf(stdout, "HOST: [ %s ] PORT: %i [ OPEN ]\n", rhost, i);
         }
+   close(sockfd);
    }
-   
    return 0;
 }
