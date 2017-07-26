@@ -5,7 +5,8 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <unistd.h>
-
+#include <getopt.h>
+#include <stdbool.h>
 #include <netdb.h>
 #include <netinet/in.h>
 
@@ -13,31 +14,47 @@
 
 #define h_addr h_addr_list[0]
 
+struct args{
+	char *rhost;
+	char *startPort;
+	char *endPort;
+	int show_closed;
+};
+
+
+void usage(void);
+struct args *parse_args(int argc, char **argv);
+
 int main(int argc, char **argv) {
     
-    if (argc < 3) {
-      fprintf(stderr,"usage %s 'hostname' 'start-port' optional-'end-port'\n", argv[0]);
-      exit(1);
-    }
-
-    int sockfd, startPort, endPort;
+    
+    struct args *Args = parse_args(argc, argv);
+	
+	if( (Args->rhost == NULL || Args->startPort == NULL) ){
+		usage();
+	}
+	
+	
+    int sockfd, startPort, endPort, show_closed;
     struct sockaddr_in serv_addr;
     struct hostent *server;
     char *rhost;
 
-    rhost = argv[1];
-
-    startPort = atoi(argv[2]);
-
-    if(argv[3] == NULL){
+    rhost = Args->rhost;
+    startPort = atoi(Args->startPort);
+	show_closed = Args->show_closed;
+    if(Args->endPort == NULL){
         endPort = startPort;
     } else {
-    endPort = atoi(argv[3]);
+    endPort = atoi(Args->endPort);
     }
+    
     if (endPort < startPort){
         fprintf(stderr, "Invalid port range!\n");
         exit(1);
     }
+    
+    free(Args);
     
     printf("HOST: %s\n",rhost);
     printf("START PORT: %i\n",startPort);
@@ -65,12 +82,43 @@ int main(int argc, char **argv) {
         serv_addr.sin_port = htons(i);
 
         if (connect(sockfd, (struct sockaddr*)&serv_addr, sizeof(serv_addr)) < 0) {
-          fprintf(stderr, "HOST: [ %s ] PORT: %i [ CLOSED ]\n", rhost, i);
-
+          if(show_closed == 1){
+			fprintf(stderr, "HOST: [ %s ] PORT: %i [ CLOSED ]\n", rhost, i);
+			}
         } else {
          fprintf(stdout, "HOST: [ %s ] PORT: %i [ OPEN ]\n", rhost, i);
         }
    close(sockfd);
    }
    return 0;
+}
+
+void usage(){
+      fprintf(stderr, "Usage: tscan -r \"Remote host\" -p \"Port\" [-e] [end Port] [-o shows only open ports]\n");
+      exit(1);
+    }
+
+struct args *parse_args(int argc, char **argv){
+	
+	struct args *arg = calloc(1, sizeof(struct args));
+	int opt;
+	int i = 0;
+    while ((opt = getopt(argc, argv, "pero")) != -1) {
+		i = i + 2;
+        switch (opt) {
+        case 'p': arg->startPort = argv[i]; break;
+        case 'e': arg->endPort = argv[i]; break;
+        case 'r': arg->rhost = argv[i]; break;
+        case 'o': 
+			arg->show_closed = 1; 
+			i--;
+			break;
+        default:
+            usage();
+            
+        }
+        
+    }
+	
+	return arg;
 }
