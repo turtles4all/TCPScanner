@@ -9,10 +9,13 @@
 #include <stdbool.h>
 #include <netdb.h>
 #include <netinet/in.h>
-
 #include <string.h>
 
 #define h_addr h_addr_list[0]
+
+#define COLOR_RESET	"\x1b[0m"
+#define LIGHT_RED			"\x1b[91m"
+#define LIGHT_GREEN			"\x1b[92m"
 
 struct args{
 	char *rhost;
@@ -21,19 +24,16 @@ struct args{
 	int show_closed;
 };
 
-
 void usage(void);
 struct args *parse_args(int argc, char **argv);
 
 int main(int argc, char **argv) {
-    
     
     struct args *Args = parse_args(argc, argv);
 	
 	if( (Args->rhost == NULL || Args->startPort == NULL) ){
 		usage();
 	}
-	
 	
     int sockfd, startPort, endPort, show_closed;
     struct sockaddr_in serv_addr;
@@ -83,10 +83,10 @@ int main(int argc, char **argv) {
 
         if (connect(sockfd, (struct sockaddr*)&serv_addr, sizeof(serv_addr)) < 0) {
           if(show_closed == 1){
-			fprintf(stderr, "HOST: [ %s ] PORT: %i [ CLOSED ]\n", rhost, i);
+			fprintf(stderr, "HOST: [ %s ] PORT: %i [%s CLOSED %s]\n", rhost, i, LIGHT_RED, COLOR_RESET);
 			}
         } else {
-         fprintf(stdout, "HOST: [ %s ] PORT: %i [ OPEN ]\n", rhost, i);
+         fprintf(stdout, "HOST: [ %s ] PORT: %i [%s OPEN %s]\n", rhost, i, LIGHT_GREEN, COLOR_RESET);
         }
    close(sockfd);
    }
